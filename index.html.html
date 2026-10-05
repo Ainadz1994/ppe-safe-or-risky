@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPE Safe or Risky?</title>
+<style>
+:root{--navy:#17324d;--blue:#2d6cdf;--green:#2e8b57;--red:#d9534f;--light:#f5f8fc;--text:#1f2937;--muted:#667085}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#eef5ff,#f8fbff);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+.game{width:100%;max-width:560px;background:white;border-radius:24px;box-shadow:0 12px 35px rgba(20,50,80,.12);overflow:hidden}.top{background:var(--navy);color:white;padding:25px 22px 20px;text-align:center}.top h1{margin:0;font-size:27px}.top p{margin:8px 0 0;font-size:14px;opacity:.9}.content{padding:22px}.progress-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted);margin-bottom:12px}.bar{height:8px;background:#e8edf4;border-radius:99px;overflow:hidden;margin-bottom:22px}.bar span{display:block;height:100%;background:var(--blue);width:0;transition:.25s}.scenario{font-size:21px;line-height:1.4;font-weight:700;text-align:center;margin:22px 4px 25px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice{border:0;border-radius:15px;padding:17px 10px;font-size:18px;font-weight:700;cursor:pointer;transition:.15s}.safe{background:#e8f6ee;color:#17633c}.risky{background:#fdeceb;color:#a6322e}.choice:active{transform:scale(.98)}.choice:disabled{cursor:default;opacity:.65}.feedback{min-height:54px;text-align:center;margin:17px 0 5px;font-size:15px;line-height:1.4}.feedback.good{color:var(--green);font-weight:700}.feedback.bad{color:var(--red);font-weight:700}.next,.restart{display:block;width:100%;border:0;border-radius:13px;padding:14px;background:var(--blue);color:white;font-size:16px;font-weight:700;cursor:pointer;margin-top:10px}.hidden{display:none!important}.result{text-align:center;padding:10px 0 4px}.score{font-size:45px;font-weight:800;color:var(--navy);margin:8px}.result h2{margin:5px 0}.result p{color:var(--muted);line-height:1.5}.small{font-size:12px;color:var(--muted);text-align:center;margin-top:15px}.edit-note{margin-top:22px;padding:12px;background:#f6f8fb;border-radius:12px;font-size:12px;color:#667085;line-height:1.5}.edit-note b{color:#344054}@media(max-width:420px){.scenario{font-size:19px}.top h1{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="game">
+  <div class="top">
+    <h1>🦺 PPE: SAFE OR RISKY?</h1>
+    <p>Safety Week 2026 • Make the right call!</p>
+  </div>
+  <div class="content" id="quizScreen">
+    <div class="progress-row"><span id="qNumber">Question 1 of 10</span><span id="scoreLabel">Score: 0</span></div>
+    <div class="bar"><span id="progressBar"></span></div>
+    <div class="scenario" id="scenario"></div>
+    <div class="buttons">
+      <button class="choice safe" id="safeBtn">✓ SAFE</button>
+      <button class="choice risky" id="riskyBtn">⚠ RISKY</button>
+    </div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <button class="next hidden" id="nextBtn">Next Question →</button>
+    <div class="small">Choose one answer for each situation.</div>
+  </div>
+  <div class="content result hidden" id="resultScreen">
+    <div>🎉</div>
+    <h2>Game Complete!</h2>
+    <div class="score" id="finalScore">0 / 10</div>
+    <p id="resultMessage"></p>
+    <button class="restart" id="restartBtn">Play Again</button>
+  </div>
+</div>
+
+<script>
+/* ==========================================================
+   EDITABLE SECTION — change the 10 questions below.
+   answer: "SAFE" or "RISKY"
+   ========================================================== */
+const questions = [
+  { text: "You check your PPE before starting work and make sure it is in good condition.", answer: "SAFE", reason: "Checking PPE before use helps identify damage or problems early." },
+  { text: "Your safety gloves have a tear, but you decide to use them just for one quick task.", answer: "RISKY", reason: "Damaged PPE may not provide the protection you need." },
+  { text: "You remove your safety glasses because they feel uncomfortable while working.", answer: "RISKY", reason: "PPE should not be removed when the hazard is still present." },
+  { text: "You replace damaged PPE before starting the job.", answer: "SAFE", reason: "Damaged PPE should be replaced before use." },
+  { text: "You wear the required high-visibility vest when working near moving vehicles.", answer: "SAFE", reason: "High-visibility PPE helps others see you in areas with vehicle movement." },
+  { text: "You borrow someone else's PPE without checking whether it fits you properly.", answer: "RISKY", reason: "PPE should be suitable and fit properly for the wearer." },
+  { text: "You keep your PPE clean and store it properly after use.", answer: "SAFE", reason: "Proper care and storage can help keep PPE effective and usable." },
+  { text: "You wear PPE only when your supervisor is nearby.", answer: "RISKY", reason: "PPE should be worn whenever the task or area requires it, not only when someone is watching." },
+  { text: "You notice your safety helmet is damaged and report it for replacement.", answer: "SAFE", reason: "Reporting damaged PPE and getting a replacement is the safer choice." },
+  { text: "You think a task will take only two minutes, so you skip the required PPE.", answer: "RISKY", reason: "Even short tasks can expose you to hazards. Required PPE should still be used." }
+];
+
+let current = 0, score = 0, answered = false;
+const scenario = document.getElementById('scenario');
+const qNumber = document.getElementById('qNumber');
+const scoreLabel = document.getElementById('scoreLabel');
+const progressBar = document.getElementById('progressBar');
+const feedback = document.getElementById('feedback');
+const safeBtn = document.getElementById('safeBtn');
+const riskyBtn = document.getElementById('riskyBtn');
+const nextBtn = document.getElementById('nextBtn');
+const quizScreen = document.getElementById('quizScreen');
+const resultScreen = document.getElementById('resultScreen');
+
+function loadQuestion(){
+  answered = false;
+  const q = questions[current];
+  qNumber.textContent = `Question ${current+1} of ${questions.length}`;
+  scoreLabel.textContent = `Score: ${score}`;
+  progressBar.style.width = `${((current)/questions.length)*100}%`;
+  scenario.textContent = q.text;
+  feedback.textContent = '';
+  feedback.className = 'feedback';
+  safeBtn.disabled = false; riskyBtn.disabled = false;
+  nextBtn.classList.add('hidden');
+}
+
+function choose(choice){
+  if(answered) return;
+  answered = true;
+  const q = questions[current];
+  const correct = choice === q.answer;
+  if(correct) score++;
+  safeBtn.disabled = true; riskyBtn.disabled = true;
+  scoreLabel.textContent = `Score: ${score}`;
+  progressBar.style.width = `${((current+1)/questions.length)*100}%`;
+  feedback.className = 'feedback ' + (correct ? 'good' : 'bad');
+  feedback.textContent = (correct ? '✓ Correct! ' : '✗ Not quite. ') + q.reason;
+  nextBtn.textContent = current === questions.length-1 ? 'See My Score →' : 'Next Question →';
+  nextBtn.classList.remove('hidden');
+}
+
+safeBtn.addEventListener('click',()=>choose('SAFE'));
+riskyBtn.addEventListener('click',()=>choose('RISKY'));
+nextBtn.addEventListener('click',()=>{
+  if(current < questions.length-1){ current++; loadQuestion(); }
+  else showResult();
+});
+
+document.getElementById('restartBtn').addEventListener('click',()=>{
+  current = 0; score = 0; resultScreen.classList.add('hidden'); quizScreen.classList.remove('hidden'); loadQuestion();
+});
+
+function showResult(){
+  quizScreen.classList.add('hidden');
+  resultScreen.classList.remove('hidden');
+  document.getElementById('finalScore').textContent = `${score} / ${questions.length}`;
+  let msg = score === 10 ? 'Perfect! You are a PPE pro! 🏆' : score >= 8 ? 'Great job! You know your PPE safety basics.' : score >= 6 ? 'Good effort! A little PPE refresher will help.' : 'Time for a quick PPE refresher. Safety first!';
+  document.getElementById('resultMessage').textContent = msg;
+}
+
+loadQuestion();
+</script>
+</body>
+</html>
