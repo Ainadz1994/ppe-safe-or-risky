@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PPE Safe or Risky | Safety Week 2026</title>
+<style>
+:root{--yellow:#f4c430;--dark:#222;--green:#198754;--red:#d64545;--bg:#f5f6f7;--card:#fff}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--dark)}
+.wrap{max-width:680px;margin:auto;padding:18px}.top{text-align:center;padding:10px 0 16px}.tag{font-weight:700;letter-spacing:1px;font-size:13px}.title{font-size:32px;font-weight:900;margin:8px 0}.sub{font-size:16px;color:#555}.card{background:var(--card);border-radius:18px;padding:22px;box-shadow:0 3px 16px #00000012}.progress{height:8px;background:#e5e5e5;border-radius:99px;overflow:hidden;margin-bottom:18px}.bar{height:100%;width:0;background:var(--yellow);transition:.25s}.qno{font-size:14px;color:#666;margin-bottom:10px}.question{font-size:21px;font-weight:800;line-height:1.35;margin-bottom:18px}.btn{width:100%;border:0;border-radius:12px;padding:16px;margin:7px 0;font-size:18px;font-weight:800;cursor:pointer;min-height:54px}.safe{background:#e8f6ed;color:#146c3a}.risky{background:#fdeaea;color:#a52d2d}.btn:disabled{cursor:default;opacity:.72}.correct{outline:3px solid var(--green)}.wrong{outline:3px solid var(--red)}.feedback{min-height:52px;margin-top:12px;font-weight:700;line-height:1.4}.next,.again{background:#222;color:#fff;border:0;border-radius:12px;padding:14px 20px;font-weight:800;font-size:16px;cursor:pointer;width:100%;margin-top:8px}.result{text-align:center}.score{font-size:44px;font-weight:900;margin:12px 0}.small{color:#666;font-size:14px;line-height:1.5}.edit{margin-top:16px;font-size:12px;color:#777;text-align:center}
+@media(max-width:430px){.title{font-size:27px}.question{font-size:19px}.wrap{padding:12px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="top">
+    <div class="tag">SAFETY WEEK 2026</div>
+    <div class="title">🦺 PPE SAFE OR RISKY?</div>
+    <div class="sub">Test your PPE knowledge • Uji pengetahuan PPE anda</div>
+  </div>
+  <div class="card" id="game">
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div class="qno" id="qno"></div>
+    <div class="question" id="question"></div>
+    <button class="btn safe" id="safe">✅ SAFE / SELAMAT</button>
+    <button class="btn risky" id="risky">⚠️ RISKY / BERISIKO</button>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <button class="next" id="next" hidden>NEXT / SETERUSNYA →</button>
+  </div>
+  <div class="card result" id="result" hidden>
+    <div class="title">🎉 WELL DONE! / TAHNIAH!</div>
+    <div class="score" id="score"></div>
+    <div class="small" id="message"></div>
+    <button class="again" id="again">PLAY AGAIN / MAIN LAGI</button>
+  </div>
+  <div class="edit">Edit the questions in the <b>questions</b> section of index.html.</div>
+</div>
+<script>
+// ================= EDITABLE QUESTIONS =================
+// answer: "safe" or "risky"
+const questions = [
+ {en:"You check your PPE before starting work.",ms:"Anda memeriksa PPE sebelum memulakan kerja.",answer:"safe",why:"Good practice. / Amalan yang baik."},
+ {en:"Your safety gloves have a tear, but you use them anyway.",ms:"Sarung tangan keselamatan anda koyak, tetapi anda tetap menggunakannya.",answer:"risky",why:"Damaged PPE should be replaced. / PPE yang rosak perlu diganti."},
+ {en:"You wear safety glasses when there is a risk of dust or splashes.",ms:"Anda memakai cermin mata keselamatan apabila terdapat risiko habuk atau percikan.",answer:"safe",why:"Correct. / Betul."},
+ {en:"You remove your safety helmet because it feels uncomfortable in a work area with falling-object hazards.",ms:"Anda menanggalkan topi keselamatan kerana tidak selesa di kawasan yang mempunyai risiko objek jatuh.",answer:"risky",why:"Do not remove required PPE in a hazardous area. / Jangan tanggalkan PPE yang diperlukan di kawasan berbahaya."},
+ {en:"You wear a high-visibility vest when working near moving vehicles.",ms:"Anda memakai vest pantul cahaya apabila bekerja berhampiran kenderaan bergerak.",answer:"safe",why:"Good visibility helps reduce risk. / Penglihatan yang jelas membantu mengurangkan risiko."},
+ {en:"You share PPE without checking whether it is clean, suitable or in good condition.",ms:"Anda berkongsi PPE tanpa memeriksa sama ada ia bersih, sesuai atau dalam keadaan baik.",answer:"risky",why:"PPE should be suitable and checked before use. / PPE mesti sesuai dan diperiksa sebelum digunakan."},
+ {en:"You replace damaged PPE before starting the task.",ms:"Anda menggantikan PPE yang rosak sebelum memulakan tugasan.",answer:"safe",why:"Correct. / Betul."},
+ {en:"You wear ear protection in a high-noise area where hearing protection is required.",ms:"Anda memakai pelindung telinga di kawasan bising yang memerlukan perlindungan pendengaran.",answer:"safe",why:"Good practice. / Amalan yang baik."},
+ {en:"You continue working even though your PPE does not fit properly.",ms:"Anda terus bekerja walaupun PPE anda tidak muat dengan betul.",answer:"risky",why:"PPE should fit properly. / PPE perlu dipakai dengan saiz dan kesesuaian yang betul."},
+ {en:"You follow the required PPE rules for the work area even when nobody is watching.",ms:"Anda mematuhi peraturan PPE yang ditetapkan walaupun tiada siapa melihat.",answer:"safe",why:"Safety should always come first. / Keselamatan mesti sentiasa diutamakan."}
+];
+let current=0,score=0,answered=false;
+const $=id=>document.getElementById(id);
+function render(){
+ answered=false; const q=questions[current];
+ $('qno').textContent=`Question ${current+1} of ${questions.length} / Soalan ${current+1} daripada ${questions.length}`;
+ $('question').innerHTML=`${q.en}<br><span style="font-weight:600;color:#666;font-size:.88em">${q.ms}</span>`;
+ $('bar').style.width=((current/questions.length)*100)+'%';
+ $('feedback').textContent=''; $('next').hidden=true;
+ $('safe').disabled=false; $('risky').disabled=false; $('safe').classList.remove('correct','wrong'); $('risky').classList.remove('correct','wrong');
+}
+function answer(choice){
+ if(answered)return; answered=true; const q=questions[current];
+ $('safe').disabled=true; $('risky').disabled=true;
+ const clicked=choice==='safe'?$('safe'):$('risky'); const correct=q.answer==='safe'?$('safe'):$('risky');
+ correct.classList.add('correct');
+ if(choice===q.answer){score++;clicked.classList.add('correct');$('feedback').textContent='✓ CORRECT! / BETUL! '+q.why;}
+ else {clicked.classList.add('wrong');$('feedback').textContent='✗ NOT QUITE. / TIDAK TEPAT. '+q.why;}
+ if(current<questions.length-1)$('next').hidden=false; else finish();
+}
+function finish(){
+ $('game').hidden=true; $('result').hidden=false; $('score').textContent=score+' / '+questions.length;
+ let msg=score===10?'Perfect! PPE Pro! / Sempurna! Anda memang pakar PPE!':score>=8?'Great job! / Syabas!':'Good try! Review your PPE basics. / Cuba lagi! Semak semula asas PPE anda.';
+ $('message').textContent=msg;
+}
+$('safe').addEventListener('click',()=>answer('safe'));
+$('risky').addEventListener('click',()=>answer('risky'));
+$('next').addEventListener('click',()=>{current++;render();});
+$('again').addEventListener('click',()=>{current=0;score=0;$('result').hidden=true;$('game').hidden=false;render();});
+render();
+</script>
+</body>
+</html>
